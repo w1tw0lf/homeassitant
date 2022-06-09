@@ -23,13 +23,13 @@
             {% if is_state('binary_sensor.evening','off') %}
               {% if is_state('binary_sensor.sleeping','off') %}
                 {% if as_timestamp(states.calendar.event.attributes.start_time) < now().timestamp() %}
-                  You have an {{ states.calendar.event.attributes.message }} at {{as_timestamp(states.calendar.event.attributes.start_time) | timestamp_custom("%H:%M",true) }}! 
+                  You have an {{ states.calendar.event.attributes.message|replace("event - ","") }} at {{as_timestamp(states.calendar.event.attributes.start_time) |timestamp_custom("%H:%M",true) }}!  
                 {% endif %}
               {% endif %}
             {% endif %}
         {% endif %}
         {% if is_state('binary_sensor.wakeup','on') %}
-            Today's weather is between {{state_attr('sensor.weatherbit_forecast_day_1', 'templow')}} and {{state_attr('sensor.weatherbit_forecast_day_1', 'temperature')}} with {{state_attr('sensor.weatherbit_forecast_day_1', 'weather_text')|lower}}.
+            Today's weather is between {{state_attr('sensor.weatherbit_forecast_day_1', 'templow')|round}} and {{state_attr('sensor.weatherbit_forecast_day_1', 'temperature')|round}} with {{state_attr('sensor.weatherbit_forecast_day_1', 'weather_text')|lower}}.
         {% endif %}        
         {% if is_state('binary_sensor.morning','on') %}
             The weather is {{states('sensor.weatherbit_apparent_temperature')|round}} degrees, {{ states("sensor.weatherbit_weather_description")|lower }} and {{ states.sensor.weather_beaufort_text.state }}.
@@ -38,7 +38,7 @@
             The weather is {{states('sensor.weatherbit_apparent_temperature')|round}} degrees, {{ states("sensor.weatherbit_weather_description")|lower }} and {{ states.sensor.weather_beaufort_text.state }}.
         {% endif %}
         {% if is_state('binary_sensor.evening','on') %}
-            Tomorrow weather is between {{state_attr('sensor.weatherbit_forecast_day_2', 'templow')}} and {{state_attr('sensor.weatherbit_forecast_day_2', 'temperature')}} with {{state_attr('sensor.weatherbit_forecast_day_2', 'weather_text')}}.
+            Tomorrow weather is between {{state_attr('sensor.weatherbit_forecast_day_2', 'templow')|round}} and {{state_attr('sensor.weatherbit_forecast_day_2', 'temperature')|round}} with {{state_attr('sensor.weatherbit_forecast_day_2', 'weather_text')|lower }}.
         {% endif %}
         {% if is_state('sun.sun', 'below_horizon') %}
           You have
@@ -166,6 +166,11 @@
             {{ [ 'The alarm is activated in',
                   'The alarm is set to'
                     ] | random }} {{states('input_text.alarm_state') }}.
+        {% endif %}
+        {% if is_state('binary_sensor.evening','on') %}
+          {% if states.sensor.event_days2go.state == '1' %}
+              Upcoming event for tomorrow: {{ states.calendar.event.attributes.message|replace("event - ","") }} at {{as_timestamp(states.calendar.event.attributes.start_time) |timestamp_custom("%H:%M",true) }}! 
+          {% endif %}
         {% endif %}
         {% if is_state('binary_sensor.sleeping','on') %}
             {{ [ 'The wake up time is set for',
