@@ -4,7 +4,9 @@
         {% if is_state('binary_sensor.wakeup','on') %}
             Today is {{states.sensor.today_is.state }}, {{ as_timestamp(now()) | timestamp_custom('%B %d %Y') }}{% if is_state('calendar.holidays_in_south_africa','on') %} and is {{ states.calendar.holidays_in_south_africa.attributes.message }}. {% else %}.{% endif %}
         {% else %}
-            It is a {{ states.sensor.today_is.state}}.
+        {% if is_state('binary_sensor.morning','on') %}          
+              It is a {{ states.sensor.today_is.state}}.          
+        {% endif %}
         {% endif %}
         {% if is_state('binary_sensor.evening','on') %}
           {% if states.sensor.anniversary_our_wedding.state | int == 1 %}
@@ -16,13 +18,13 @@
             Happy Anniversary! It been an amazing {{ states.sensor.anniversary_our_wedding.attributes.years }} years!
           {% endif %}
           {% if states.calendar.birthdays.state == 'on' %}
-            Today is {{ states.calendar.birthdays.attributes.message }}! 
+            It's {{ states.calendar.birthdays.attributes.message }}!!!
           {% endif %}
         {% endif %}
         {% if states.sensor.event_days2go.state == '0' %}
             {% if is_state('binary_sensor.evening','off') %}
               {% if is_state('binary_sensor.sleeping','off') %}
-                {% if as_timestamp(states.calendar.event.attributes.start_time) < now().timestamp() %}
+                {% if as_timestamp(states.calendar.event.attributes.start_time) > now().timestamp() %}
                   You have an {{ states.calendar.event.attributes.message|replace("event - ","") }} at {{as_timestamp(states.calendar.event.attributes.start_time) |timestamp_custom("%H:%M",true) }}!  
                 {% endif %}
               {% endif %}
@@ -158,8 +160,8 @@
             {% endif %}            
         {% endif %}
         {% if is_state('binary_sensor.evening','on') %}
-            {{ [ 'The wake up time is set for',
-                      'The alarm is set for'
+            {{ [ 'The alarm clock is set for',
+                      'The wake up alarm is set for'
                     ] | random }}
             {{states("sensor.wakeup_alarm_time") }}am. 
             {{states("input_text.tomorrow_state") }}. 
@@ -173,8 +175,8 @@
           {% endif %}
         {% endif %}
         {% if is_state('binary_sensor.sleeping','on') %}
-            {{ [ 'The wake up time is set for',
-                      'The alarm is set for'
+            {{ [ 'The wake up alarm is set for',
+                      'The alarm clock is set for'
                     ] | random }}
             {{states("sensor.wakeup_alarm_time") }}am. 
             {{ [ 'The alarm is activated in',
