@@ -20,7 +20,7 @@ rest:
   - resource: "https://developer.sepush.co.za/business/2.0/status"
     scan_interval: '01:00:00' # RATE LIMIT!
     headers:
-      Token: XOyYgJ3megkxXwUcMD4q
+      Token: **token**
     sensor:
       - name: Eskom Loadshedding stage
         force_update: true
@@ -33,7 +33,7 @@ sensor:
     name: EskomSePushAllowance
     resource: "https://developer.sepush.co.za/business/2.0/api_allowance"
     headers:
-      Token: XOyYgJ3megkxXwUcMD4q
+      Token: **token**
     json_attributes_path: "$.allowance"
     json_attributes:
       - count
