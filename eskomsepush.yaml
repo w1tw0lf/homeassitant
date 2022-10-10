@@ -142,12 +142,12 @@ sensor:
         value_template: >
           {%if state_attr('sensor.eskomsepush','events')|count > 0 %}
           {%- for event in states['sensor.eskomsepush'].attributes.events -%} {{
-          as_timestamp(event['start']) | timestamp_custom('%a %d %b:') }} {{ event['note'] }} {{
-          as_timestamp(event['start']) | timestamp_custom('from %H:%M') }} to {{
+          as_timestamp(event['start']) | timestamp_custom('%a %d %b:') }} {{
+          as_timestamp(event['start']) | timestamp_custom('%H:%M') }} to {{
           as_timestamp(event['end']) | timestamp_custom('%H:%M') }}
           {{- '\n' -}} {%- endfor -%}
           {%else%}
-          None scheduled
+          None slot scheduled
           {%endif%}
       loadshedding_stage_forecast:
         friendly_name: Loadshedding stage forecast
