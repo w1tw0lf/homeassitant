@@ -96,9 +96,9 @@ sensor:
             {% endif %}
           {% endif %}
 
-##############
-#Automations #
-##############
+#############
+#Automatons #
+#############
 
 alias: Helper - Solar Battery charge Slots
 description: ""
