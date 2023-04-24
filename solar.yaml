@@ -1,0 +1,620 @@
+#####################
+#Loadshedding slots #
+#####################
+sensor:
+  - platform: template
+    sensors:
+      loadshedding_slot_duration:
+        value_template: >
+          {% set entity = 'sensor.load_shedding_area_xxxxxxxxxxx' %}
+          {% set start_time = as_timestamp(state_attr(entity, 'next_start_time'))|timestamp_custom("%H:%M",true) %}
+          {% set end_time = as_timestamp(state_attr(entity, 'next_end_time'))|timestamp_custom("%H:%M",true) %}
+          {% set slot_start = as_timestamp(state_attr(entity, 'forecast')[1].start_time)|timestamp_custom("%H:%M",true) %}
+          {% set slot_ends = as_timestamp(state_attr(entity, 'forecast')[1].end_time)|timestamp_custom("%H:%M",true) %}
+          {% if end_time == slot_start %}
+            {% set diff = strptime(slot_ends, '%H:%M') - strptime(start_time, '%H:%M') %}
+            {% set hours = diff.seconds / 3600 %}
+            {{hours|replace(".0","")}}
+          {% else %}
+            {% set diff = strptime(end_time, '%H:%M') - strptime(start_time, '%H:%M') %}
+            {% set hours = diff.seconds / 3600 %}
+            {{hours|replace(".0","")}}
+          {% endif %}
+      next_loadshedding_day:
+        value_template: >
+          {% set entity = 'sensor.load_shedding_area_xxxxxxxxxxx' %}
+          {% if state_attr(entity, 'starts_in') < 1200 %}
+            {% set midnight = today_at() %}
+            {% set event = state_attr(entity, 'next_start_time') | as_datetime | as_local %}
+            {% set delta = event - midnight %}
+            {% if delta.days == 0 %}
+              Today
+            {% else %}
+              Tomorrow         
+            {% endif %}
+          {% else %}
+            none
+          {% endif %}
+      charge_slot:
+        value_template: >
+          {% set entity = 'sensor.load_shedding_area_xxxxxxxxxxx' %}
+          {% if state_attr(entity, 'next_stage') != 0 %}
+            {% set time = as_timestamp(state_attr(entity, 'next_start_time')) |timestamp_custom("%H:%M",true) %}
+            {% set slot1 =  as_timestamp(strptime(states('select.ss_prog1_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% set slot2 =  as_timestamp(strptime(states('select.ss_prog2_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% set slot3 =  as_timestamp(strptime(states('select.ss_prog3_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% set slot4 =  as_timestamp(strptime(states('select.ss_prog4_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% set slot5 =  as_timestamp(strptime(states('select.ss_prog5_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% set slot6 =  as_timestamp(strptime(states('select.ss_prog6_time'), "%H:%M")) |timestamp_custom("%H:%M")%}
+            {% if slot1 < time < slot2 %}1
+            {% elif slot1 == time %}1
+            {% elif slot2 < time < slot3 %}2
+            {% elif slot2 == time %}2
+            {% elif slot3 < time < slot4 %}3
+            {% elif slot3 == time %}3
+            {% elif slot4 < time < slot5 %}4
+            {% elif slot4 == time %}4
+            {% elif slot5 < time < slot6 %}5
+            {% elif slot5 == time %}5
+            {% else %}6
+            {%- endif %}
+          {% else %}
+            none
+          {% endif %}
+
+############################
+#Check energy availability #
+############################
+      energy_availability:
+        friendly_name: "Energy availability"
+        icon_template: >-
+          {% if states('sensor.ss_grid_connected_status')|int == 1 %}
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}              
+              mdi:lightning-bolt
+            {% else %}
+              mdi:transmission-tower
+            {% endif %}
+          {% elif states('sensor.ss_grid_connected_status')|int == 0 %} 
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %} 
+              mdi:solar-power-variant
+            {% else %}
+              mdi:home-battery-outline          
+            {% endif %}              
+          {% endif %}          
+        value_template: >-
+          {% if states('sensor.ss_grid_connected_status')|int == 1 %}
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}             
+              grid and solar
+            {% else %}
+              grid only
+            {% endif %}
+          {% elif states('sensor.ss_grid_connected_status')|int == 0 %}
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %} 
+              solar only             
+            {% else %}               
+              battery      
+            {% endif %}
+          {% endif %}
+
+##############
+#Automations #
+##############
+
+alias: Helper - Solar Battery charge Slots
+description: ""
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.energy_availability
+    alias: Solar charging changes
+    id: energy
+condition:
+  - condition: time
+    after: "07:00:00"
+    before: "17:00:00"
+action:
+  - choose:
+      - conditions:
+          - condition: time
+            after: "07:00:00"
+            before: "10:00:00"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: sensor.energy_availability
+                state: grid only
+            then:
+              - service: select.select_option
+                data:
+                  option: Allow Grid
+                alias: Allow Grid on slot 3
+                target:
+                  entity_id: select.ss_prog3_charge
+            else:
+              - service: select.select_option
+                data:
+                  option: No Grid or Gen
+                target:
+                  entity_id: select.ss_prog3_charge
+                alias: Disallow Grid on slot 3
+            alias: Change slot 3 based on pv power
+      - conditions:
+          - condition: time
+            after: "10:00:00"
+            before: "17:00:00"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: sensor.energy_availability
+                state: grid only
+            then:
+              - service: select.select_option
+                data:
+                  option: Allow Grid
+                alias: Allow Grid on slot 4
+                target:
+                  entity_id: select.ss_prog4_charge
+            else:
+              - service: select.select_option
+                data:
+                  option: No Grid or Gen
+                target:
+                  entity_id: select.ss_prog4_charge
+                alias: Disallow Grid on slot 4
+            alias: Change slot 3 based on pv power
+mode: queued
+max: 10
+
+
+
+
+alias: Helper - Solar Battery levels
+description: ""
+trigger:
+  - platform: time_pattern
+    minutes: /30
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: state
+            entity_id: sensor.next_loadshedding_day
+            state: Today
+            alias: Today
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "1"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog2_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+                  - service: number.set_value
+                    data:
+                      value: "40"
+                    target:
+                      entity_id: number.ss_prog5_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog6_capacity
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "2"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog2_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog2_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+                  - service: number.set_value
+                    data:
+                      value: "40"
+                    target:
+                      entity_id: number.ss_prog5_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog6_capacity
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "3"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog2_capacity
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog3_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog2_capacity
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog1_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+                  - service: number.set_value
+                    data:
+                      value: "40"
+                    target:
+                      entity_id: number.ss_prog5_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog6_capacity
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "4"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog3_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog1_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog2_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+                  - service: number.set_value
+                    data:
+                      value: "40"
+                    target:
+                      entity_id: number.ss_prog5_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog6_capacity
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "5"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog5_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog5_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog1_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog2_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog6_capacity
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "6"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog5_capacity
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog6_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog5_capacity
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog6_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog1_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog2_capacity
+                  - service: number.set_value
+                    data:
+                      value: "30"
+                    target:
+                      entity_id: number.ss_prog3_capacity
+                  - service: number.set_value
+                    data:
+                      value: "100"
+                    target:
+                      entity_id: number.ss_prog4_capacity
+      - conditions:
+          - condition: state
+            entity_id: sensor.next_loadshedding_day
+            state: Tomorrow
+            alias: Tomorrow
+        sequence:
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: sensor.charge_slot
+                    state: "1"
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              >= 3}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog6_capacity
+                          - service: number.set_value
+                            data:
+                              value: "70"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+                      - conditions:
+                          - condition: template
+                            value_template: >-
+                              {{states.sensor.loadshedding_slot_duration.state|float
+                              <= 2}}
+                        sequence:
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog6_capacity
+                          - service: number.set_value
+                            data:
+                              value: "50"
+                            target:
+                              entity_id: number.ss_prog1_capacity
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog2_capacity
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog3_capacity
+          - service: number.set_value
+            data:
+              value: "100"
+            target:
+              entity_id: number.ss_prog4_capacity
+          - service: number.set_value
+            data:
+              value: "40"
+            target:
+              entity_id: number.ss_prog5_capacity
+      - conditions:
+          - condition: state
+            entity_id: sensor.next_loadshedding_day
+            state: none
+            alias: none
+        sequence:
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog1_capacity
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog2_capacity
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog3_capacity
+          - service: number.set_value
+            data:
+              value: "100"
+            target:
+              entity_id: number.ss_prog4_capacity
+          - service: number.set_value
+            data:
+              value: "40"
+            target:
+              entity_id: number.ss_prog5_capacity
+          - service: number.set_value
+            data:
+              value: "30"
+            target:
+              entity_id: number.ss_prog6_capacity
+mode: single
