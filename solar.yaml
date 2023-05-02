@@ -69,32 +69,36 @@ sensor:
         friendly_name: "Energy availability"
         icon_template: >-
           {% if states('sensor.ss_grid_connected_status')|int == 1 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}              
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
               mdi:lightning-bolt
+            {% elif states('sensor.ss_grid_ct_power')|float <= 100 %}
+              mdi:home-battery-outline 
             {% else %}
               mdi:transmission-tower
             {% endif %}
-          {% elif states('sensor.ss_grid_connected_status')|int == 0 %} 
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %} 
+          {% elif states('sensor.ss_grid_connected_status')|int == 0 %}
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
               mdi:solar-power-variant
             {% else %}
-              mdi:home-battery-outline          
-            {% endif %}              
+              mdi:home-battery-outline 
+            {% endif %}
           {% endif %}          
         value_template: >-
           {% if states('sensor.ss_grid_connected_status')|int == 1 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}             
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
               grid and solar
+            {% elif states('sensor.ss_grid_ct_power')|float <= 100 %}
+              battery
             {% else %}
               grid only
             {% endif %}
           {% elif states('sensor.ss_grid_connected_status')|int == 0 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %} 
-              solar only             
-            {% else %}               
-              battery      
+            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
+              solar only
+            {% else %}
+              battery
             {% endif %}
-          {% endif %}
+          {% endif %} 
 
 #############
 #Automatons #
