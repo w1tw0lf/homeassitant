@@ -1,6 +1,6 @@
-#####################
-#Loadshedding slots #
-#####################
+##########
+#Sensors #
+##########
 sensor:
   - platform: template
     sensors:
@@ -621,4 +621,220 @@ action:
               value: "30"
             target:
               entity_id: number.ss_prog6_capacity
+mode: single
+
+
+alias: Helper - Geyser schedule
+description: ""
+trigger:
+  - platform: time
+    at: "10:00:05"
+    id: geyser on
+  - platform: time
+    at: "15:59:55"
+    id: geyser off
+  - platform: state
+    entity_id:
+      - switch.stove_switch
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Stove on
+    from: "off"
+    to: "on"
+    alias: Stove turn on
+  - platform: state
+    entity_id:
+      - switch.stove_switch
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 0
+    id: Stove off
+    from: "on"
+    to: "off"
+    alias: Stove turn off
+  - type: power
+    platform: device
+    entity_id: sensor.dishwasher_power
+    domain: sensor
+    id: Dishwasher above
+    above: 1500
+    alias: Dishwasher power above 1500
+  - type: power
+    platform: device
+    entity_id: sensor.dishwasher_power
+    domain: sensor
+    id: Dishwasher below
+    below: 1500
+  - platform: numeric_state
+    entity_id: sensor.ss_battery_soc
+    above: 80
+    id: Energy available
+    alias: Battery available
+  - platform: numeric_state
+    entity_id: sensor.ss_battery_soc
+    below: 70
+    id: no energy
+    alias: Battery low
+condition:
+  - condition: time
+    after: "10:00:00"
+    before: "16:00:00"
+    alias: Between 10am and 4pm
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: "off"
+action:
+  - if:
+      - condition: trigger
+        id: geyser on
+        enabled: true
+      - condition: device
+        type: is_off
+        entity_id: switch.stove_switch
+        domain: switch
+      - type: is_power
+        condition: device
+        entity_id: sensor.dishwasher_power
+        domain: sensor
+        below: 1500
+        alias: Dishwasher power below 1500
+      - condition: template
+        value_template: "{{states('sensor.energy_availability') != 'battery'}}"
+        alias: Energy available
+    then:
+      - type: turn_on
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Has been turned on
+    alias: Turn geyser on
+  - if:
+      - condition: trigger
+        id: geyser off
+    then:
+      - type: turn_off
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Has been turned off
+    alias: Turn geyser off
+  - if:
+      - condition: trigger
+        id: Stove on
+    then:
+      - type: turn_off
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Turned off while using stove
+        alias: Notify geyser off due to stove usage
+    else: []
+    alias: Stove turned on
+  - if:
+      - condition: trigger
+        id: Stove off
+      - condition: template
+        value_template: "{{states('sensor.energy_availability') != 'battery'}}"
+        alias: Energy available
+      - condition: device
+        type: is_off
+        entity_id: switch.geyser
+        domain: switch
+    then:
+      - type: turn_on
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Turn back on after stove usage
+        alias: Turned on due to stove off
+    else: []
+    alias: Stove turned off
+  - if:
+      - condition: trigger
+        id: Dishwasher above
+    then:
+      - type: turn_off
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Turned off while using dishwasher
+        alias: Notify geyser off due to dishwasher usage
+    else: []
+    alias: dishwasher turned on
+  - if:
+      - condition: trigger
+        id: Dishwasher below
+      - condition: device
+        type: is_off
+        entity_id: switch.geyser
+        domain: switch
+      - condition: template
+        value_template: "{{states('sensor.energy_availability') != 'battery'}}"
+        alias: Energy available
+    then:
+      - type: turn_on
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Turn back on after dishwasher usage
+        alias: Turned on due to dishwasher off
+    else: []
+    alias: dishwasher turned off
+  - if:
+      - condition: trigger
+        id: no energy
+    then:
+      - type: turn_off
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Turned off while there is no energy
+        alias: Notify geyser off due to no energy
+    else: []
+    alias: No energy
+  - if:
+      - condition: trigger
+        id: Energy available
+      - condition: device
+        type: is_off
+        entity_id: switch.geyser
+        domain: switch
+      - condition: state
+        entity_id: switch.stove_switch
+        state: "off"
+        alias: Stove is off
+      - type: is_power
+        condition: device
+        entity_id: sensor.dishwasher_power
+        domain: sensor
+        below: 1500
+        alias: Dishwasher power below 1500
+    then:
+      - type: turn_on
+        entity_id: switch.geyser
+        domain: switch
+      - service: notify.all_devices
+        data:
+          title: Geyser
+          message: Energy source restored, turning on
+        alias: Turned on due to energy available
+    else: []
+    alias: Energy available
 mode: single
