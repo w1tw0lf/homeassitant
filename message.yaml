@@ -18,6 +18,7 @@
     {% set event = 'calendar.event' %}
     {% set vacation = 'calendar.vacation' %}
     {% set days2event = 'sensor.event_days2go' %}
+    {% set days2vacation = 'sensor.vacation_days2go' %}
     {% set days2birthday = 'sensor.birthday_days2go' %}
     {% set days2schoolend = 'sensor.school_end_days2go' %}
     {% set days2schoolstart = 'sensor.school_start_days2go' %}
@@ -207,7 +208,7 @@
                     ] | random }} {{states(alarmstate) }}.
         {% endif %}
         {% if is_state(evening,'on') %}
-          {% if states.sensor(days2event) == '0' %}
+          {% if states(days2event) == '0' %}
               Upcoming event for tomorrow: {{ state_attr(event,'message')|replace("event - ","") }} at {{as_timestamp(state_attr(event,'start_time')) |timestamp_custom("%H:%M",true) }}! 
           {% endif %}
         {% endif %}
@@ -220,10 +221,10 @@
                   'The alarm is set to'
                     ] | random }} {{states(alarmstate) }}.
         {% endif %}
-         {% if states('sensor.vacation_days2go') | int < 30 %}
-            {% if states('sensor.vacation_days2go') != 'unknown' %}
-              {% if states('sensor.vacation_days2go') | int > 0 %}
-                There are {{ states('sensor.vacation_days2go')}} days until {{ state_attr(vacation,'message')|replace("vacation - ","") }} holiday !
+         {% if states(days2vacation) | int < 30 %}
+            {% if states(days2vacation) != 'unknown' %}
+              {% if states(days2vacation) | int > 0 %}
+                There are {{ states(days2vacation)}} days until {{ state_attr(vacation,'message')|replace("vacation - ","") }} holiday !
               {% else %}
                 {% if states(vacation) == 'off' %}               
                   Are you ready for {{ state_attr(vacation,'message')|replace("vacation - ","") }} holiday, starting tomorrow ?
