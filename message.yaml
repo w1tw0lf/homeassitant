@@ -28,7 +28,6 @@
     {% set alarmstate = 'input_text.alarm_state' %}
     {% set tomorrowstate = 'input_text.tomorrow_state' %}
     {% set distancefromhome = 'proximity.jaco.state' %}
-    {% set kid = 'Zelmone' %}
     {# Briefing #}
     {%- macro getReport() -%}          
         {% if is_state(wakeup,'on') %}
@@ -164,16 +163,16 @@
         {% if is_state(days2schoolend, '0') %}
             {% if is_state(afternoon,'on') %}
               {% if is_state(school,'on') %}
-              {{ [ 'Don`t forget to fetch {{kid}} at 4 for short break.',
-                    'It`s the last school day, remember to fetch {{kid}}.'                
+              {{ [ 'Don`t forget to fetch Zelmone at 4 for short break.',
+                    'It`s the last school day, remember to fetch Zelmone.'                
                   ] | random }}
               {% endif %}
             {% endif %}
         {% else %}
             {% if is_state(afternoon,'on') %}
               {% if is_state(school,'on') %}
-              {{ [ 'Don`t forget to fetch {{kid}} at 4.',
-                    'It`s a school day, remember to fetch {{kid}}.'                
+              {{ [ 'Don`t forget to fetch Zelmone at 4.',
+                    'It`s a school day, remember to fetch Zelmone.'                
                   ] | random }}
               {% endif %}
             {% endif %}
@@ -183,7 +182,7 @@
               {% if is_state(afternoon,'on') or is_state(evening,'on') %}
                 {% if is_state(school,'off') %}
                   {{ [ 'Sorry but school starts on monday.',
-                        'It`s back to school for {{kid}} from monday.'                
+                        'It`s back to school for Zelmone from monday.'                
                     ] | random }}
                 {% endif %}
               {% endif %} 
@@ -191,7 +190,7 @@
               {% if is_state(afternoon,'on') or is_state(evening,'on') %}
                 {% if is_state(school,'off') %}
                   {{ [ 'Sorry but school starts tomorrow.',
-                        'It`s back to school for {{kid}} from tomorrow.'                
+                        'It`s back to school for Zelmone from tomorrow.'                
                     ] | random }}
                 {% endif %}
               {% endif %} 
