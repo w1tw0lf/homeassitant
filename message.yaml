@@ -1,45 +1,80 @@
 >
+    {% set wakeup = 'binary_sensor.wakeup' %}
+    {% set morning = 'binary_sensor.morning' %}
+    {% set afternoon = 'binary_sensor.afternoon' %}
+    {% set evening = 'binary_sensor.evening' %}
+    {% set sleeping = 'binary_sensor.sleeping' %}    
+    {% set weather = 'weather.weatherflow_day_based_forecast_2' %}
+    {% set temp = 'sensor.tempest_st_00089068_temperature' %}
+    {% set zambretti = 'sensor.tempest_st_00089068_zambretti_text' %}
+    {% set beaufort = 'sensor.tempest_st_00089068_beaufort_scale' %}
+    {% set forecast = 'sensor.forecast_state' %}
+    {% set wtoday = 'sensor.today_state' %}
+    {% set wind = 'sensor.windforecast' %}
+    {% set beaufortt = 'sensor.weather_beaufort_text' %}
+    {% set wedding = 'sensor.anniversary_our_wedding' %}
+    {% set birthdays = 'calendar.birthdays' %}
+    {% set holidays = 'calendar.holidays_in_south_africa' %}
+    {% set event = 'calendar.event' %}
+    {% set vacation = 'calendar.vacation' %}
+    {% set days2event = 'sensor.event_days2go' %}
+    {% set days2birthday = 'sensor.birthday_days2go' %}
+    {% set days2schoolend = 'sensor.school_end_days2go' %}
+    {% set days2schoolstart = 'sensor.school_start_days2go' %}
+    {% set school = 'input_boolean.zelmone_school' %}
+    {% set work2 = 'binary_sensor.workday_sensor_2' %}
+    {% set noschool = 'input_boolean.school_holidays' %}
+    {% set alarmtime = 'sensor.wakeup_alarm_time' %}
+    {% set alarmstate = 'input_text.alarm_state' %}
+    {% set tomorrowstate = 'input_text.tomorrow_state' %}
+    {% set distancefromhome = 'proximity.jaco.state' %}
+    {% set kid = 'Zelmone' %}
     {# Briefing #}
     {%- macro getReport() -%}          
-        {% if is_state('binary_sensor.wakeup','on') %}
-            Today is {{states.sensor.today_is.state }}, {{ as_timestamp(now()) | timestamp_custom('%d %B %Y') }}{% if is_state('calendar.holidays_in_south_africa','on') %} and is {{ states.calendar.holidays_in_south_africa.attributes.message }}, {% else %},{% endif %}
+        {% if is_state(wakeup,'on') %}
+            Today is {{states.sensor.today_is.state }}, {{ as_timestamp(now()) | timestamp_custom('%d %B %Y') }}
+        {% if is_state(holidays,'on') %}
+            and is {{ state_attr(holidays,'message') }}, 
         {% else %}
-          {% if is_state('binary_sensor.morning','on') %}          
+        ,
+        {% endif %}
+        {% else %}
+          {% if is_state(morning,'on') %}          
                 Today is {{ states.sensor.today_is.state}},          
           {% endif %}
         {% endif %}
-        {% if is_state('binary_sensor.wakeup','on') %}
-          {% if is_state('sensor.anniversary_our_wedding','0') %}
-            Happy Anniversary! It been an amazing {{ states.sensor.anniversary_our_wedding.attributes.years }} years!
+        {% if is_state(wakeup,'on') %}
+          {% if is_state(wedding,'0') %}
+            Happy Anniversary! It been an amazing {{ state_attr(wedding, 'years')}} years!
           {% endif %}
-          {% if states.calendar.birthdays.state == 'on' %}
-            It's {{ states.calendar.birthdays.attributes.message }}!!!
+          {% if states(birthdays) == 'on' %}
+            It's {{ state_attr(birthdays,'message') }}!!!
           {% endif %}
         {% endif %}
-        {% if is_state('binary_sensor.evening','on') %}
-            {% if states.sensor.birthday_days2go.state == '0' %}
-                  Tomorrow is {{ states.calendar.birthdays.attributes.message}} ! Weather will be between {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[2].templow|round}}°C and {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[2].temperature|round}}°C, {{states.sensor.forecast_state.state}} and {{states.sensor.windforecast.state}}.
+        {% if is_state(evening,'on') %}
+            {% if states(days2birthday) == '0' %}
+                  Tomorrow is {{ state_attr(birthdays,'message')}} ! Weather will be between {{state_attr(weather, 'forecast')[2].templow|round}}°C and {{state_attr(weather, 'forecast')[2].temperature|round}}°C, {{states(forecast)}} and {{states(wind)}}.
             {% else%}
-                  Tomorrow's weather will be between {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[2].templow|round}}°C and {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[2].temperature|round}}°C, {{states.sensor.forecast_state.state}} and {{states.sensor.windforecast.state}}.
+                  Tomorrow's weather will be between {{state_attr(weather, 'forecast')[2].templow|round}}°C and {{state_attr(weather, 'forecast')[2].temperature|round}}°C, {{states(forecast)}} and {{states(wind)}}.
             {% endif %}
         {% endif %}
-        {% if is_state('binary_sensor.sleeping','on') %}
-            Today's weather is between {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[1].templow|round}}°C and {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[1].temperature|round}}°C, {{states.sensor.today_state.state}} with {{states.sensor.weather_beaufort_text.state}}.
+        {% if is_state(sleeping,'on') %}
+            Today's weather is between {{state_attr(weather, 'forecast')[1].templow|round}}°C and {{state_attr(weather, 'forecast')[1].temperature|round}}°C, {{states(wtoday)}} with {{states(beaufortt)}}.
         {% endif %}
-        {% if is_state('binary_sensor.wakeup','on') %}
-            the weather is between {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[1].templow|round}}°C and {{state_attr('weather.weatherflow_day_based_forecast_2', 'forecast')[1].temperature|round}}°C, {{states.sensor.today_state.state}} with {{states.sensor.weather_beaufort_text.state}}.      
+        {% if is_state(wakeup,'on') %}
+            the weather is between {{state_attr(weather, 'forecast')[1].templow|round}}°C and {{state_attr(weather, 'forecast')[1].temperature|round}}°C, {{states(wtoday)}} with {{states(beaufortt)}}.      
         {% endif %}
-        {% if is_state('binary_sensor.morning','on') %}
-            it is currently {{states('sensor.tempest_st_00089068_temperature')|round}}°C, {{states('sensor.tempest_st_00089068_zambretti_text')|lower}} and {{states.sensor.tempest_st_00089068_beaufort_scale.attributes.description|lower}}.
+        {% if is_state(morning,'on') %}
+            it is currently {{states(temp)|round}}°C, {{states(zambretti)|lower}} and {{state_attr(beaufort,'description')|lower}}.
         {% endif %}
-        {% if is_state('binary_sensor.afternoon','on') %}
-            It is currently {{states('sensor.tempest_st_00089068_temperature')|round}}°C, {{states('sensor.tempest_st_00089068_zambretti_text')|lower}} and {{states.sensor.tempest_st_00089068_beaufort_scale.attributes.description|lower}}.
+        {% if is_state(afternoon,'on') %}
+            It is currently {{states(temp)|round}}°C, {{states(zambretti)|lower}} and {{state_attr(beaufort,'description')|lower}}.
         {% endif %}
-        {% if states.sensor.event_days2go.state == '0' %}
-            {% if is_state('binary_sensor.evening','off') %}
-              {% if is_state('binary_sensor.sleeping','off') %}
-                {% if as_timestamp(states.calendar.event.attributes.start_time) > now().timestamp() %}
-                  You have an {{ states.calendar.event.attributes.message|replace("event - ","") }} at {{as_timestamp(states.calendar.event.attributes.start_time) |timestamp_custom("%H:%M",true) }}!  
+        {% if states(days2event) == '0' %}
+            {% if is_state(evening,'off') %}
+              {% if is_state(sleeping,'off') %}
+                {% if as_timestamp(state_attr(event,'start_time')) > now().timestamp() %}
+                  You have an {{ state_attr(event,'message')|replace("event - ","") }} at {{as_timestamp(state_attr(event,'start_time')) |timestamp_custom("%H:%M",true) }}!  
                 {% endif %}
               {% endif %}
             {% endif %}
@@ -72,140 +107,143 @@
                 'until the sun slips below the horizon.',
                 'before the sun officially sets.'
               ]|random }}
-        {% endif %}           
-        {% set dow = as_timestamp(now()) | timestamp_custom('%A') %}      
-        {% if dow == 'Thursday' %}
-          {% if is_state('binary_sensor.evening','on') %}
-            {{ [ 'Don`t forget tomorrow is waste collection. ',
-                  'The waste bin should go out in the morning.'
-                ] | random }}
+        {% endif %}   
+        {% if states(vacation) == 'off' %} 
+          {% set dow = as_timestamp(now()) | timestamp_custom('%A') %}      
+          {% if dow == 'Thursday' %}
+            {% if is_state(evening,'on') %}
+              {{ [ 'Don`t forget tomorrow is waste collection. ',
+                    'The waste bin should go out in the morning.'
+                  ] | random }}
+            {% endif %}
+          {% endif %}
+          {% if dow == 'Friday' %}
+            {% if is_state(afternoon,'on') %}
+                {{ [ 'Don`t forget to bring in the waste bin. ',
+                      'The waste bin will feel lonely if you leave them out all night.'
+                    ] | random }}
+            {% endif %}
+            {% if is_state(wakeup,'on') %}
+              {{ [ 'Today is waste collection.',
+                    'The waste bin should go out this morning.',
+                    'Don`t forget to take the waste bin out.'
+                  ] | random }}
+            {% endif %}
+          {% endif %}        
+          {% if is_state(wakeup,'on') %}
+            {% if is_state(holidays,'off') %}
+              {% if is_state(work2,'off') %}
+                {{ [ 'It is weekend, stay in bed. ',
+                      'You can relax it is weekend'
+                    ] | random }}
+              {% endif %}
+            {% endif %}
+            {% if is_state(work2,'on') %}
+              {% if is_state(noschool,'off') %}          
+                {{ [ 'It is a work day, get up and work work work.',
+                      'You have to work today, get up and go.'
+                    ] | random }}
+              {% endif %}
+            {% endif %}
+            {% if is_state(holidays,'on') %}
+                {% if is_state(noschool,'off') %}
+                {{ [ 'It is your day off, go do something fun.',
+                    'Have fun and relax, it is a no work day.'
+                    ] | random }}
+              {% endif %}
+            {% endif %}
+            {% if is_state(work2,'on') %}
+              {% if is_state(noschool,'on') %}
+                {{ [ 'It is a school holiday, no rush, but still have to work.',
+                      'Sleep a bit longer, but remember you still have to work.'
+                    ] | random }}
+              {% endif %}
+            {% endif %}
           {% endif %}
         {% endif %}
-        {% if dow == 'Friday' %}
-          {% if is_state('binary_sensor.afternoon','on') %}
-              {{ [ 'Don`t forget to bring in the waste bin. ',
-                    'The waste bin will feel lonely if you leave them out all night.'
-                  ] | random }}
-          {% endif %}
-          {% if is_state('binary_sensor.wakeup','on') %}
-            {{ [ 'Today is waste collection.',
-                  'The waste bin should go out this morning.',
-                  'Don`t forget to take the waste bin out.'
-                ] | random }}
-          {% endif %}
-        {% endif %}
-        {% if is_state('binary_sensor.wakeup','on') %}
-          {% if is_state('calendar.holidays_in_south_africa','off') %}
-            {% if is_state('binary_sensor.workday_sensor_2','off') %}
-              {{ [ 'It is weekend, stay in bed. ',
-                    'You can relax it is weekend'
-                  ] | random }}
-            {% endif %}
-          {% endif %}
-          {% if is_state('binary_sensor.workday_sensor_2','on') %}
-            {% if is_state('input_boolean.school_holidays','off') %}          
-              {{ [ 'It is a work day, get up and work work work.',
-                    'You have to work today, get up and go.'
-                  ] | random }}
-            {% endif %}
-          {% endif %}
-          {% if is_state('calendar.holidays_in_south_africa','on') %}
-              {% if is_state('input_boolean.school_holidays','off') %}
-              {{ [ 'It is your day off, go do something fun.',
-                  'Have fun and relax, it is a no work day.'
-                  ] | random }}
-            {% endif %}
-          {% endif %}
-          {% if is_state('binary_sensor.workday_sensor_2','on') %}
-            {% if is_state('input_boolean.school_holidays','on') %}
-              {{ [ 'It is a school holiday, no rush, but still have to work.',
-                    'Sleep a bit longer, but remember you still have to work.'
-                  ] | random }}
-            {% endif %}
-          {% endif %}
-        {% endif %}
-        {% if is_state('sensor.school_end_days2go', '0') %}
-            {% if is_state('binary_sensor.afternoon','on') %}
-              {% if is_state('input_boolean.zelmone_school','on') %}
-              {{ [ 'Don`t forget to fetch Zelmone at 4 for short break.',
-                    'It`s the last school day, remember to fetch Zelmone.'                
+        {% if is_state(days2schoolend, '0') %}
+            {% if is_state(afternoon,'on') %}
+              {% if is_state(school,'on') %}
+              {{ [ 'Don`t forget to fetch {{kid}} at 4 for short break.',
+                    'It`s the last school day, remember to fetch {{kid}}.'                
                   ] | random }}
               {% endif %}
             {% endif %}
         {% else %}
-            {% if is_state('binary_sensor.afternoon','on') %}
-              {% if is_state('input_boolean.zelmone_school','on') %}
-              {{ [ 'Don`t forget to fetch Zelmone at 4.',
-                    'It`s a school day, remember to fetch Zelmone.'                
+            {% if is_state(afternoon,'on') %}
+              {% if is_state(school,'on') %}
+              {{ [ 'Don`t forget to fetch {{kid}} at 4.',
+                    'It`s a school day, remember to fetch {{kid}}.'                
                   ] | random }}
               {% endif %}
             {% endif %}
         {% endif %}
-          {% if is_state('sensor.school_start_days2go', '0') %}
+          {% if is_state(days2schoolstart, '0') %}
             {% if dow == 'Friday' %}
-              {% if is_state('binary_sensor.afternoon','on') or is_state('binary_sensor.evening','on') %}
-                {% if is_state('input_boolean.zelmone_school','off') %}
+              {% if is_state(afternoon,'on') or is_state(evening,'on') %}
+                {% if is_state(school,'off') %}
                   {{ [ 'Sorry but school starts on monday.',
-                        'It`s back to school for Zelmone from monday.'                
+                        'It`s back to school for {{kid}} from monday.'                
                     ] | random }}
                 {% endif %}
               {% endif %} 
             {% else %}
-              {% if is_state('binary_sensor.afternoon','on') or is_state('binary_sensor.evening','on') %}
-                {% if is_state('input_boolean.zelmone_school','off') %}
+              {% if is_state(afternoon,'on') or is_state(evening,'on') %}
+                {% if is_state(school,'off') %}
                   {{ [ 'Sorry but school starts tomorrow.',
-                        'It`s back to school for Zelmone from tomorrow.'                
+                        'It`s back to school for {{kid}} from tomorrow.'                
                     ] | random }}
                 {% endif %}
               {% endif %} 
             {% endif %}            
         {% endif %}
-        {% if is_state('binary_sensor.evening','on') %}
+        {% if is_state(evening,'on') %}
             {{ [ 'The alarm clock is set for',
                       'The wake up alarm is set for'
                     ] | random }}
-            {{states("sensor.wakeup_alarm_time") }}am. 
-            {{states("input_text.tomorrow_state") }}. 
+            {{states(alarmtime) }}am. 
+            {{states(tomorrowstate) }}. 
             {{ [ 'The alarm is activated in',
                   'The alarm is set to'
-                    ] | random }} {{states('input_text.alarm_state') }}.
+                    ] | random }} {{states(alarmstate) }}.
         {% endif %}
-        {% if is_state('binary_sensor.evening','on') %}
-          {% if states.sensor.event_days2go.state == '0' %}
-              Upcoming event for tomorrow: {{ states.calendar.event.attributes.message|replace("event - ","") }} at {{as_timestamp(states.calendar.event.attributes.start_time) |timestamp_custom("%H:%M",true) }}! 
+        {% if is_state(evening,'on') %}
+          {% if states.sensor(days2event) == '0' %}
+              Upcoming event for tomorrow: {{ state_attr(event,'message')|replace("event - ","") }} at {{as_timestamp(state_attr(event,'start_time')) |timestamp_custom("%H:%M",true) }}! 
           {% endif %}
         {% endif %}
-        {% if is_state('binary_sensor.sleeping','on') %}
+        {% if is_state(sleeping,'on') %}
             {{ [ 'The wake up alarm is set for',
                       'The alarm clock is set for'
                     ] | random }}
-            {{states("sensor.wakeup_alarm_time") }}am. 
+            {{states(alarmtime) }}am. 
             {{ [ 'The alarm is activated in',
                   'The alarm is set to'
-                    ] | random }} {{states('input_text.alarm_state') }}.
+                    ] | random }} {{states(alarmstate) }}.
         {% endif %}
-        {% if states('sensor.vacation_days2go') | int < 30 %}
+         {% if states('sensor.vacation_days2go') | int < 30 %}
             {% if states('sensor.vacation_days2go') != 'unknown' %}
               {% if states('sensor.vacation_days2go') | int > 0 %}
-                There are {{ states.sensor.vacation_days2go.state }} days until {{ states.calendar.vacation.attributes.message|replace("vacation - ","") }} holiday !
+                There are {{ states('sensor.vacation_days2go')}} days until {{ state_attr(vacation,'message')|replace("vacation - ","") }} holiday !
               {% else %}
-                Are you ready for {{ states.calendar.vacation.attributes.message|replace("vacation - ","") }} holiday, starting tomorrow ?
+                {% if states(vacation) == 'off' %}               
+                  Are you ready for {{ state_attr(vacation,'message')|replace("vacation - ","") }} holiday, starting tomorrow ?
+                {% else %}
+                  Enjoy your holiday!!! Your are {{states(distancefromhome)}}km away from home at {{ state_attr(vacation,'message')|replace("vacation - ","") }}. Enjoy some quality family time !!
+                {% endif %}  
               {% endif %}
             {% endif %}
         {% endif %}
     {%- endmacro -%}
-
 
     {# a macro that removes all newline characters, empty spaces, and returns formatted text  #}
       {%- macro cleanup(data) -%}
         {%- for item in data.split("\n")  if item | trim != "" -%}
           {{ item | trim }} {% endfor -%}
     {%- endmacro -%}
-
     {# a macro to call all macros :)  #}
     {%- macro mother_of_all_macros() -%}
       {{ getReport() }}
     {%- endmacro -%}
-
     {# Call the macro  #}
     {{- cleanup(mother_of_all_macros()) -}}
