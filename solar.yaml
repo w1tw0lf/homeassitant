@@ -68,37 +68,39 @@ sensor:
       energy_availability:
         friendly_name: "Energy availability"
         icon_template: >-
-          {% if states('sensor.ss_grid_connected_status')|int == 1 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
-              mdi:lightning-bolt
-            {% elif states('sensor.ss_grid_ct_power')|float <= 100 %}
-              mdi:home-battery-outline 
-            {% else %}
-              mdi:transmission-tower
+            {% set grid_connected = states('sensor.ss_grid_connected_status')|int %}
+            {% set solar_out = states('sensor.solar_out')|float %}
+            {% set load_power = states('sensor.ss_load_power')|float %}
+            {% set grid_ct_power = states('sensor.ss_grid_ct_power')|float %}
+
+            {% if grid_connected == 1 %}
+              {% set icon = 'mdi:lightning-bolt' if solar_out >= load_power else 'mdi:home-battery-outline' if grid_ct_power <= 100 else 'mdi:transmission-tower' %}
+            {% elif grid_connected == 0 %}
+              {% set icon = 'mdi:solar-power-variant' if solar_out >= load_power else 'mdi:home-battery-outline' %}
             {% endif %}
-          {% elif states('sensor.ss_grid_connected_status')|int == 0 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
-              mdi:solar-power-variant
-            {% else %}
-              mdi:home-battery-outline 
-            {% endif %}
-          {% endif %}          
+
+            {{ icon }}    
         value_template: >-
-          {% if states('sensor.ss_grid_connected_status')|int == 1 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
-              grid and solar
-            {% elif states('sensor.ss_grid_ct_power')|float <= 100 %}
-              battery
-            {% else %}
-              grid only
+            {% set grid_connected = states('sensor.ss_grid_connected_status')|int %}
+            {% set solar_out = states('sensor.solar_out')|float %}
+            {% set load_power = states('sensor.ss_load_power')|float %}
+            {% set grid_ct_power = states('sensor.ss_grid_ct_power')|float %}
+
+            {% if grid_connected == 1 %}
+              {% if solar_out >= load_power %}
+                grid and solar
+              {% elif grid_ct_power <= 100 %}
+                battery
+              {% else %}
+                grid only
+              {% endif %}
+            {% elif grid_connected == 0 %}
+              {% if solar_out >= load_power %}
+                solar only
+              {% else %}
+                battery
+              {% endif %}
             {% endif %}
-          {% elif states('sensor.ss_grid_connected_status')|int == 0 %}
-            {% if states('sensor.solar_out')|float >= states('sensor.ss_load_power')|float %}
-              solar only
-            {% else %}
-              battery
-            {% endif %}
-          {% endif %} 
 
 #############
 #Automatons #
