@@ -72,20 +72,17 @@ sensor:
             {% set solar_out = states('sensor.solar_out')|float %}
             {% set load_power = states('sensor.ss_load_power')|float %}
             {% set grid_ct_power = states('sensor.ss_grid_ct_power')|float %}
-
             {% if grid_connected == 1 %}
               {% set icon = 'mdi:lightning-bolt' if solar_out >= load_power else 'mdi:home-battery-outline' if grid_ct_power <= 100 else 'mdi:transmission-tower' %}
             {% elif grid_connected == 0 %}
               {% set icon = 'mdi:solar-power-variant' if solar_out >= load_power else 'mdi:home-battery-outline' %}
             {% endif %}
-
             {{ icon }}    
         value_template: >-
             {% set grid_connected = states('sensor.ss_grid_connected_status')|int %}
             {% set solar_out = states('sensor.solar_out')|float %}
             {% set load_power = states('sensor.ss_load_power')|float %}
             {% set grid_ct_power = states('sensor.ss_grid_ct_power')|float %}
-
             {% if grid_connected == 1 %}
               {% if solar_out >= load_power %}
                 grid and solar
