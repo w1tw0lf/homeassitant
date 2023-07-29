@@ -1,0 +1,240 @@
+type: custom:vertical-stack-in-card
+cards:
+  - type: custom:mushroom-template-card
+    entity: group.master_bedroom
+    icon: mdi:bed
+    icon_color: |
+      {% if is_state(entity, 'on') %}
+        #03A9F4
+      {% else %}  
+        grey
+      {% endif %}
+    primary: Master Bedroom
+    secondary: >-
+      {{ states('sensor.main_bedroom_temp') | round(0) }}°C | {{
+      states('sensor.main_bedroom_humidity') | round(0) }}%
+    layout: horizontal
+    tap_action:
+      action: navigate
+      navigation_path: /mobile-dashboard/master-bedroom
+    double_tap_action:
+      action: navigate
+      navigation_path: /dashboard-masrom/master-bedroom
+    hold_action:
+      action: toggle
+    badge_icon: |
+      {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
+        mdi:radiator
+      {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
+        mdi:snowflake
+      {% else %}  {% endif %}
+    badge_color: |
+      {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
+        red
+      {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
+        #03A9F4
+      {% else %} {% endif %}
+    card_mod:
+      style:
+        mushroom-state-info$: |
+          .primary {
+            font-size: 16px !important;
+            position: relative;
+            top: -50px;
+            left: -155px;
+            overflow: visible !important;
+            white-space: normal !important;
+          }
+          .secondary {
+            position: relative;
+            overflow: visible !important;
+            top: -52px;
+            left: -155px;
+          }
+        mushroom-shape-icon$: |
+          .shape {
+            position: relative;
+            left: -43px;
+            top: 55px;
+          }
+        .: |
+          :host {
+            --mush-icon-size: 146px;
+            --secondary-text-color: 
+              {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
+                red
+              {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
+                #03A9F4
+              {% else %}
+                #6c6c75
+              {% endif %}
+          }
+        style: |
+          mushroom-badge-icon {
+            left: 69px;
+            top: 25px;
+          }
+  - type: custom:mushroom-template-card
+    primary: none
+    icon_color: disabled
+    icon: mdi:lightbulb
+    secondary: none
+    entity: light.fan_parents_room
+    tap_action:
+      action: fire-dom-event
+      browser_mod:
+        service: browser_mod.popup
+        data:
+          title: Master Bedroom Lights
+          content:
+            type: vertical-stack
+            cards:
+              - type: custom:mushroom-light-card
+                entity: light.fan_parents_room
+                name: Master Bedroom Light
+                use_light_color: true
+                show_brightness_control: true
+                show_color_temp_control: false
+                show_color_control: false
+                collapsible_controls: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      --ha-card-border-width: 0;
+                    }
+              - type: custom:mushroom-light-card
+                entity: light.fan_parents_room
+                use_light_color: true
+                show_brightness_control: true
+                show_color_temp_control: false
+                show_color_control: false
+                collapsible_controls: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      --ha-card-border-width: 0;
+                    }
+            card_mod:
+              style: |
+                ha-card {
+                  --ha-card-border-width: 0;
+                }
+    hold_action:
+      action: toggle
+    double_tap_action:
+      action: more-info
+    badge_color: ''
+    badge_icon: ''
+    card_mod:
+      style:
+        mushroom-shape-icon$: |
+          .shape {
+            {% if is_state(config.entity, 'on') %}
+              {% if state_attr(config.entity, 'rgb_color') == none %}
+                --icon-color: rgb(255,190,137) !important;
+                --shape-color: rgb(255,190,137, 0.2 ) !important;
+              {% else %}
+                {% set r = state_attr(config.entity, 'rgb_color')[0] %}
+                {% set g = state_attr(config.entity, 'rgb_color')[1] %}
+                {% set b = state_attr(config.entity, 'rgb_color')[2] %}
+                --icon-color: rgb( {{r}}, {{g}}, {{b}} ) !important;
+                --shape-color: rgba( {{r}}, {{g}}, {{b}}, 0.2 ) !important;
+              {% endif %}
+            {% endif %}
+          }
+        .: |
+          ha-card {
+            width: 66px;
+            margin-left: 68%;
+            top: -178px;
+            background: none;
+          }
+          :host {
+            --mush-icon-size: 38px;
+          }
+  - type: custom:mushroom-chips-card
+    chips:
+      - type: conditional
+        conditions:
+          - entity: input_boolean.parents_sleep_mode
+            state: 'on'
+        chip:
+          type: entity
+          entity: input_boolean.parents_sleep_mode
+          icon: mdi:bed
+          icon_color: blue
+          content_info: none
+      - type: conditional
+        conditions:
+          - entity: input_boolean.parents_room_occupancy
+            state: 'on'
+        chip:
+          type: entity
+          entity: input_boolean.parents_room_occupancy
+          icon: mdi:motion-sensor
+          icon_color: blue
+          content_info: none
+      - type: conditional
+        conditions:
+          - entity: fan.fan_parents_room
+            state: 'on'
+        chip:
+          type: entity
+          entity: fan.fan_parents_room
+          icon: mdi:fan
+          icon_color: green
+          content_info: none
+          tap_action:
+            action: fire-dom-event
+            browser_mod:
+              service: browser_mod.popup
+              data:
+                title: Master Bedroom Fan
+                content:
+                  type: custom:mushroom-fan-card
+                  entity: fan.fan_parents_room
+                  name: Master Bedroom Fan
+                  icon_animation: true
+                  fill_container: false
+                  show_percentage_control: true
+                  show_oscillate_control: false
+                  collapsible_controls: true
+          card_mod:
+            style:
+              mushroom-shape-icon$: |
+                {% if is_state(config.entity, 'on') %} 
+                .shape {
+                  {{ '--shape-animation: ping 1.5s infinite, blink 1.5s ease-in-out infinite;' if states(config.entity) > '29' }}
+                }
+                @keyframes ping {
+                  0% { box-shadow: 0 0 0 0 rgba(var(--rgb-red), 1.7); }
+                  100% { box-shadow: 0 0 0.1px 5px transparent; }
+                }
+                ha-icon {
+                  --icon-animation: clip 1.5s linear infinite;
+                }
+                @keyframes clip {
+                  50% { clip-path: polygon(0 0, 55% 0, 100% 100%, 0 100%); }
+                }
+                            {% endif %}
+                }
+    card_mod:
+      style:
+        .: |
+          ha-card {
+            width: 66px;
+            margin-left: 76%;
+            top: -186px;
+            background: none;
+            --chip-border-width: 0;
+          }
+          :host {
+            --mush-icon-size: 20px;
+            --mush-chip-spacing: -2.9px
+          }
+card_mod:
+  style: |
+    ha-card {
+      height: 178px !important;
+      width: 178px !important;
+    }
