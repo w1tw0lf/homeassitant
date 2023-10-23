@@ -1,240 +1,298 @@
-type: custom:vertical-stack-in-card
+type: custom:stack-in-card
 cards:
-  - type: custom:mushroom-template-card
-    entity: group.master_bedroom
-    icon: mdi:bed
-    icon_color: |
-      {% if is_state(entity, 'on') %}
-        #03A9F4
-      {% else %}  
-        grey
-      {% endif %}
-    primary: Master Bedroom
-    secondary: >-
-      {{ states('sensor.main_bedroom_temp') | round(0) }}°C | {{
-      states('sensor.main_bedroom_humidity') | round(0) }}%
-    layout: horizontal
-    tap_action:
-      action: navigate
-      navigation_path: /mobile-dashboard/master-bedroom
-    double_tap_action:
-      action: navigate
-      navigation_path: /dashboard-masrom/master-bedroom
-    hold_action:
-      action: toggle
-    badge_icon: |
-      {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
-        mdi:radiator
-      {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
-        mdi:snowflake
-      {% else %}  {% endif %}
-    badge_color: |
-      {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
-        red
-      {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
-        #03A9F4
-      {% else %} {% endif %}
-    card_mod:
-      style:
-        mushroom-state-info$: |
-          .primary {
-            font-size: 16px !important;
-            position: relative;
-            top: -50px;
-            left: -155px;
-            overflow: visible !important;
-            white-space: normal !important;
-          }
-          .secondary {
-            position: relative;
-            overflow: visible !important;
-            top: -52px;
-            left: -155px;
-          }
-        mushroom-shape-icon$: |
-          .shape {
-            position: relative;
-            left: -43px;
-            top: 55px;
-          }
-        .: |
-          :host {
-            --mush-icon-size: 146px;
-            --secondary-text-color: 
-              {% if is_state_attr('climate.parents', 'hvac_action', 'heating') %}
-                red
-              {% elif is_state_attr('climate.parents', 'hvac_action', 'cooling') %}
-                #03A9F4
+  - type: custom:stack-in-card
+    entity: light.family_room_lights
+    cards:
+      - type: custom:mushroom-template-card
+        primary: Family room
+        secondary: >-
+          {{ '{0:.2f}'.format( ( states('sensor.family_room_temp')|float))}}°C |
+          {{'{0:.0f}'.format((states('sensor.family_room_humidity') |float))}}%
+        icon: mdi:sofa
+        icon_color: |-
+          {% if is_state(config.entity, 'on') %}
+            {% if state_attr(config.entity,'rgb_color') != none %}
+              {{state_attr(config.entity,'rgb_color')[0] * 0.5, state_attr(config.entity,'rgb_color')[1] * 0.5, state_attr(config.entity,'rgb_color')[2] * 0.5 }}
+            {% else %}
+              #694311
+            {% endif %}
+          {% else %}
+            #ba03fc
+          {% endif %}
+        tap_action:
+          action: navigate
+          navigation_path: '#family'
+        hold_action:
+          action: call-service
+          service: light.toggle
+          target:
+            entity_id:
+              - light.family_room_lights
+          data: {}
+        double_tap_action:
+          action: none
+        fill_container: false
+        entity: light.family_room_lights
+        multiline_secondary: false
+        badge_icon: ''
+        badge_color: ''
+        card_mod:
+          style: |
+            ha-card {
+              padding-bottom: 0px !important;
+            }
+            mushroom-shape-icon {
+              position: absolute;
+              top: -57px;
+              left: -40px;
+            }
+            mushroom-state-info {
+              padding-left: 34px;
+              z-index: 1;
+            }
+            :host {
+              --mush-icon-size: 2.84em;
+              --mush-icon-symbol-size: 1em
+            }
+      - type: custom:mushroom-chips-card
+        chips:
+          - type: template
+            entity: light.family_room_lights
+            double_tap_action:
+              action: none
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            content: ''
+            icon: |-
+              {% if expand(states.light) 
+                |selectattr('state', 'eq', 'on') 
+                |selectattr('entity_id', 'in', area_entities('Family Room'))
+                |rejectattr('entity_id', 'search', 'master')
+                |map(attribute='entity_id')
+                |list | count > 1
+              %}
+                mdi:lightbulb-multiple
               {% else %}
-                #6c6c75
+                mdi:lightbulb
               {% endif %}
-          }
-        style: |
-          mushroom-badge-icon {
-            left: 69px;
-            top: 25px;
-          }
-  - type: custom:mushroom-template-card
-    primary: none
-    icon_color: disabled
-    icon: mdi:lightbulb
-    secondary: none
-    entity: light.fan_parents_room
-    tap_action:
-      action: fire-dom-event
-      browser_mod:
-        service: browser_mod.popup
-        data:
-          title: Master Bedroom Lights
-          content:
-            type: vertical-stack
-            cards:
-              - type: custom:mushroom-light-card
-                entity: light.fan_parents_room
-                name: Master Bedroom Light
-                use_light_color: true
-                show_brightness_control: true
-                show_color_temp_control: false
-                show_color_control: false
-                collapsible_controls: true
-                card_mod:
-                  style: |
-                    ha-card {
-                      --ha-card-border-width: 0;
-                    }
-              - type: custom:mushroom-light-card
-                entity: light.fan_parents_room
-                use_light_color: true
-                show_brightness_control: true
-                show_color_temp_control: false
-                show_color_control: false
-                collapsible_controls: true
-                card_mod:
-                  style: |
-                    ha-card {
-                      --ha-card-border-width: 0;
-                    }
+            icon_color: |-
+              {% if expand(states.light) 
+                |selectattr('state', 'eq', 'on') 
+                |selectattr('entity_id', 'in', area_entities('Family Room'))
+                |rejectattr('entity_id', 'search', 'master')
+                |map(attribute='entity_id')
+                |list | count > 0 
+              %}
+                {% if state_attr(config.entity,'rgb_color') != none %}
+                  {{state_attr(config.entity,'rgb_color')[0] * 0.5, state_attr(config.entity,'rgb_color')[1] * 0.5, state_attr(config.entity,'rgb_color')[2] * 0.5 }}
+                {% else %}
+                  #694311
+                {% endif %}
+              {% else %}
+                none
+              {% endif %}
             card_mod:
               style: |
                 ha-card {
-                  --ha-card-border-width: 0;
+                  {% if states(config.entity) == 'on' %}
+                    {% if state_attr(config.entity,'rgb_color') != none %}
+                      background-color: rgba{{(state_attr(config.entity,'rgb_color')[0] * 0.85, state_attr(config.entity,'rgb_color')[1] * 0.85, state_attr(config.entity,'rgb_color')[2] * 0.85) + (0.6,)}} !important;
+                    {% else %}
+                      background-color: rgba(105, 67, 17, 0.2) !important;
+                    {% endif %}
+                  {% else %}
+                    background-color: rgba(var(--rgb-disabled), 0.2) !important;
+                  {% endif %}
+                  box-shadow: none !important;
+                  border: none !important;
+                  min-width: 0px !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  justify-content: center;
                 }
-    hold_action:
-      action: toggle
-    double_tap_action:
-      action: more-info
-    badge_color: ''
-    badge_icon: ''
+                ha-card::after {
+                  content: '{{ expand(states.light) |selectattr('state', 'eq', 'on') |selectattr('entity_id', 'in', area_entities('Family Room')) |rejectattr('entity_id', 'search', 'master') |map(attribute='entity_id') |list | count }}';
+                  position: absolute;
+                  top: -11%;
+                  right: -11%;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 15px;
+                  height: 15px;
+                  font-size: 9px;
+                  font-weight: 700;
+                  {% if states(config.entity) == 'on' %}
+                    {% if state_attr(config.entity,'rgb_color') != none %}
+                      background-color: rgba{{(state_attr(config.entity,'rgb_color')[0] * 0.65, state_attr(config.entity,'rgb_color')[1] * 0.65, state_attr(config.entity,'rgb_color')[2] * 0.65) + (0.6,)}} !important;
+                    {% else %}
+                      background-color: rgba(105, 67, 17, 0.5) !important;
+                    {% endif %}
+                  {% else %}
+                    background-color: rgba(var(--rgb-disabled), 0.5) !important;
+                  {% endif %}
+                  border-radius: 50%;
+                }
+          - type: template
+            icon: mdi:monitor-dashboard
+            icon_color: '#e85c10'
+            content: ''
+            double_tap_action:
+              action: none
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  {% if states('light.family_room_lights') == 'on' %}
+                    background-color: rgba{{(state_attr('light.family_room_lights','rgb_color')[0] * 0.85, state_attr('light.family_room_lights','rgb_color')[1] * 0.85, state_attr('light.family_room_lights','rgb_color')[2] * 0.85) + (0.6,)}} !important;
+                  {% else %}
+                    background-color: rgba(var(--rgb-disabled), 0.2) !important;
+                  {% endif %}
+                  box-shadow: none !important;
+                  border: none !important;
+                  min-width: 0px !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  justify-content: center;
+                }
+                ha-card::after {
+                  content: '{{states('group.media_center') | round }}';
+                  position: absolute;
+                  top: -11%;
+                  right: -11%;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 15px;
+                  height: 15px;
+                  font-size: 9px;
+                  font-weight: 700;
+                  background: rgba(232, 92, 16, 0.5);
+                  border-radius: 50%;
+                }
+          - type: template
+            icon: mdi:door-open
+            icon_color: '#ff6f00'
+            content: ''
+            double_tap_action:
+              action: none
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  {% if states('light.family_room_lights') == 'on' %}
+                    background-color: rgba{{(state_attr('light.family_room_lights','rgb_color')[0] * 0.85, state_attr('light.family_room_lights','rgb_color')[1] * 0.85, state_attr('light.family_room_lights','rgb_color')[2] * 0.85) + (0.6,)}} !important;
+                  {% else %}
+                    background-color: rgba(var(--rgb-disabled), 0.2) !important;
+                  {% endif %}
+                  box-shadow: none !important;
+                  border: none !important;
+                  min-width: 0px !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  justify-content: center;
+                }
+          - type: template
+            icon: mdi:microsoft-xbox
+            icon_color: white
+            content: ''
+            double_tap_action:
+              action: none
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            card_mod:
+              style: |
+                ha-card {
+                  {% if states('light.family_room_lights') == 'on' %}
+                    background-color: rgba{{(state_attr('light.family_room_lights','rgb_color')[0] * 0.85, state_attr('light.family_room_lights','rgb_color')[1] * 0.85, state_attr('light.family_room_lights','rgb_color')[2] * 0.85) + (0.6,)}} !important;
+                  {% else %}
+                    background-color: rgba(var(--rgb-disabled), 0.2) !important;
+                  {% endif %}
+                  box-shadow: none !important;
+                  border: none !important;
+                  min-width: 0px !important;
+                  width: 32px !important;
+                  height: 32px !important;
+                  justify-content: center;
+                }
+                ha-card::after {
+                  content: '{{states('media_player.xboxone') | round }}';
+                  position: absolute;
+                  top: -11%;
+                  right: -11%;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  width: 15px;
+                  height: 15px;
+                  font-size: 9px;
+                  font-weight: 700;
+                  background: rgba(232, 92, 16, 0.5);
+                  border-radius: 50%;
+                }
+        alignment: end
+        card_mod:
+          style:
+            .: |
+              mushroom-template-chip:nth-child(1) {
+                {% if states('light.family_room_lights') == 'off' %}
+                  margin-right: 0px;
+                  display: none !important;
+                {% else %}
+                  
+                {% endif %}
+              }
+              mushroom-template-chip:nth-child(2) {
+                {% if states('group.media_center') == 'off' %}
+                  margin-right: 0px;
+                  display: none;
+                {% else %}
+                  
+                {% endif %}
+              }
+              mushroom-template-chip:nth-child(3) {
+                {% if states('binary_sensor.front_door') == 'off' %}
+                  margin-right: 0px;
+                  display: none;
+                {% else %}
+                  
+                {% endif %}
+              }
+              mushroom-template-chip:nth-child(4) {
+                {% if states('media_player.xboxone') == 'off' %}
+                  margin-right: 0px;
+                  display: none;
+                {% else %}
+                  
+                {% endif %}
+              }
+              ha-card {
+                --chip-spacing: 3px;
+                padding-right: 5px;
+                padding-bottom: 2px;
+                height: 35px;
+              }
     card_mod:
-      style:
-        mushroom-shape-icon$: |
-          .shape {
-            {% if is_state(config.entity, 'on') %}
-              {% if state_attr(config.entity, 'rgb_color') == none %}
-                --icon-color: rgb(255,190,137) !important;
-                --shape-color: rgb(255,190,137, 0.2 ) !important;
-              {% else %}
-                {% set r = state_attr(config.entity, 'rgb_color')[0] %}
-                {% set g = state_attr(config.entity, 'rgb_color')[1] %}
-                {% set b = state_attr(config.entity, 'rgb_color')[2] %}
-                --icon-color: rgb( {{r}}, {{g}}, {{b}} ) !important;
-                --shape-color: rgba( {{r}}, {{g}}, {{b}}, 0.2 ) !important;
-              {% endif %}
-            {% endif %}
-          }
-        .: |
-          ha-card {
-            width: 66px;
-            margin-left: 68%;
-            top: -178px;
-            background: none;
-          }
-          :host {
-            --mush-icon-size: 38px;
-          }
-  - type: custom:mushroom-chips-card
-    chips:
-      - type: conditional
-        conditions:
-          - entity: input_boolean.parents_sleep_mode
-            state: 'on'
-        chip:
-          type: entity
-          entity: input_boolean.parents_sleep_mode
-          icon: mdi:bed
-          icon_color: blue
-          content_info: none
-      - type: conditional
-        conditions:
-          - entity: input_boolean.parents_room_occupancy
-            state: 'on'
-        chip:
-          type: entity
-          entity: input_boolean.parents_room_occupancy
-          icon: mdi:motion-sensor
-          icon_color: blue
-          content_info: none
-      - type: conditional
-        conditions:
-          - entity: fan.fan_parents_room
-            state: 'on'
-        chip:
-          type: entity
-          entity: fan.fan_parents_room
-          icon: mdi:fan
-          icon_color: green
-          content_info: none
-          tap_action:
-            action: fire-dom-event
-            browser_mod:
-              service: browser_mod.popup
-              data:
-                title: Master Bedroom Fan
-                content:
-                  type: custom:mushroom-fan-card
-                  entity: fan.fan_parents_room
-                  name: Master Bedroom Fan
-                  icon_animation: true
-                  fill_container: false
-                  show_percentage_control: true
-                  show_oscillate_control: false
-                  collapsible_controls: true
-          card_mod:
-            style:
-              mushroom-shape-icon$: |
-                {% if is_state(config.entity, 'on') %} 
-                .shape {
-                  {{ '--shape-animation: ping 1.5s infinite, blink 1.5s ease-in-out infinite;' if states(config.entity) > '29' }}
-                }
-                @keyframes ping {
-                  0% { box-shadow: 0 0 0 0 rgba(var(--rgb-red), 1.7); }
-                  100% { box-shadow: 0 0 0.1px 5px transparent; }
-                }
-                ha-icon {
-                  --icon-animation: clip 1.5s linear infinite;
-                }
-                @keyframes clip {
-                  50% { clip-path: polygon(0 0, 55% 0, 100% 100%, 0 100%); }
-                }
-                            {% endif %}
-                }
-    card_mod:
-      style:
-        .: |
-          ha-card {
-            width: 66px;
-            margin-left: 76%;
-            top: -186px;
-            background: none;
-            --chip-border-width: 0;
-          }
-          :host {
-            --mush-icon-size: 20px;
-            --mush-chip-spacing: -2.9px
-          }
+      style: |
+        ha-card { 
+          {% if is_state(config.entity,'on') %}
+            --primary-text-color: #1f1f1f !important;
+            --secondary-text-color: #292929;
+            background-color: rgba{{state_attr(config.entity,'rgb_color') + (1,)}}
+          {% endif %};
+        }
 card_mod:
   style: |
     ha-card {
-      height: 178px !important;
-      width: 178px !important;
+      --ha-card-border-width: 0;
     }
